@@ -1,0 +1,15 @@
+name: Feature request
+description: Suggest an idea for Launchpad
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What would you like to do?
+      description: Describe the problem or workflow first, then your idea.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Anything you tried or considered?

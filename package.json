@@ -1,0 +1,53 @@
+{
+  "name": "coolify-launchpad",
+  "version": "1.0.0",
+  "description": "A liquid-glass home screen for every app on your Coolify instance: logos, status, folders, search and one-tap redeploys.",
+  "private": true,
+  "license": "MIT",
+  "author": "younesehb",
+  "homepage": "https://github.com/younesehb/coolify-dashboard#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/younesehb/coolify-dashboard.git"
+  },
+  "bugs": {
+    "url": "https://github.com/younesehb/coolify-dashboard/issues"
+  },
+  "keywords": [
+    "coolify",
+    "dashboard",
+    "homelab",
+    "self-hosted",
+    "launcher",
+    "react"
+  ],
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "vite",
+    "dev:server": "node --watch --env-file-if-exists=.env server.js",
+    "demo": "vite build && DEMO=true node server.js",
+    "build": "vite build",
+    "start": "node server.js",
+    "format": "prettier --write src server.js demo.js vite.config.js package.json .github docker-compose.yml",
+    "check": "prettier --check src server.js demo.js vite.config.js package.json .github docker-compose.yml && node --check server.js && vite build"
+  },
+  "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "lucide-react": "^1.57.0",
+    "motion": "^14.2.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@vitejs/plugin-react": "^6.1.2",
+    "prettier": "^3.9.10",
+    "tailwindcss": "^4.3.3",
+    "vite": "^8.3.4"
+  }
+}

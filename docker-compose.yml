@@ -1,0 +1,13 @@
+# Self-host Launchpad with Docker Compose (also works as a Coolify "Docker Compose" resource).
+services:
+  launchpad:
+    image: ghcr.io/younesehb/coolify-dashboard:latest
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    environment:
+      COOLIFY_URL: ${COOLIFY_URL:?Set COOLIFY_URL}
+      COOLIFY_TOKEN: ${COOLIFY_TOKEN:?Set COOLIFY_TOKEN}
+      COOLIFY_PUBLIC_URL: ${COOLIFY_PUBLIC_URL:-}
+      ACTIONS_PASSWORD: ${ACTIONS_PASSWORD:-}
+      OWNER_NAME: ${OWNER_NAME:-}
