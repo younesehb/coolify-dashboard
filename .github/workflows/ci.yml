@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - name: Smoke test in demo mode
+        run: |
+          DEMO=true PORT=3000 node server.js &
+          for i in $(seq 1 20); do curl -fs localhost:3000/api/apps > /tmp/apps.json && break; sleep 0.5; done
+          node -e "const d=require('/tmp/apps.json'); if (!d.demo || d.items.length < 10) process.exit(1); console.log(d.items.length + ' demo items')"
+          curl -fs localhost:3000/ | grep -q '<div id="root">'
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

@@ -1,0 +1,32 @@
+name: Bug report
+description: Something in Launchpad does not work as expected
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what you saw instead.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Launchpad version or image tag
+      placeholder: ghcr.io/younesehb/coolify-dashboard:1.0.0
+  - type: input
+    id: coolify
+    attributes:
+      label: Coolify version
+      placeholder: 4.0.0-beta.4xx
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and device
+      placeholder: Safari 19 on iPhone, Chrome 140 on macOS
+  - type: textarea
+    id: logs
+    attributes:
+      label: Server logs or console errors
+      description: Remove tokens, passwords and private domains before pasting.
+      render: shell

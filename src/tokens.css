@@ -1,0 +1,20 @@
+/* Design tokens: liquid glass over a wallpaper. Status colours are the only accents. */
+:root {
+  --night: oklch(14% 0.01 280);
+
+  --glass-top: rgb(255 255 255 / 0.17);
+  --glass-bottom: rgb(255 255 255 / 0.07);
+  --glass-dark-top: rgb(36 36 42 / 0.84);
+  --glass-dark-bottom: rgb(24 24 30 / 0.8);
+  --glass-edge: rgb(255 255 255 / 0.2);
+  --glass-highlight: rgb(255 255 255 / 0.38);
+  --glass-lowlight: rgb(255 255 255 / 0.06);
+  --glass-sheen: rgb(255 255 255 / 0.22);
+  --glass-drop: rgb(0 0 0 / 0.5);
+  --glass-blur: 26px;
+  --glass-saturate: 175%;
+
+  --up: oklch(78% 0.17 150);
+  --warn: oklch(84% 0.15 85);
+  --down: oklch(68% 0.2 25);
+}
