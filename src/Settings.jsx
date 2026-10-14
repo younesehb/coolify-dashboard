@@ -154,6 +154,14 @@ export default function Settings({ settings, update, reset, replace, items, onCl
             </label>
             <Toggle label="Greeting" checked={settings.showGreeting} onChange={showGreeting => update({ showGreeting })} />
             <Toggle label="Search bar" checked={settings.showSearch} onChange={showSearch => update({ showSearch })} />
+            {[
+              ['system', 'System widget (CPU, memory, disk)'],
+              ['memory', 'Memory widget'],
+              ['storage', 'Storage widget'],
+              ['network', 'Network widget']
+            ].map(([k, label]) => (
+              <Toggle key={k} label={label} checked={settings.widgets[k]} onChange={v => update(s => ({ widgets: { ...s.widgets, [k]: v } }))} />
+            ))}
             <Toggle label="Health widget" checked={settings.widgets.health} onChange={v => update(s => ({ widgets: { ...s.widgets, health: v } }))} />
             <Toggle label="Instance widget" checked={settings.widgets.instance} onChange={v => update(s => ({ widgets: { ...s.widgets, instance: v } }))} />
             <Toggle

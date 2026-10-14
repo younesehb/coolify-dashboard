@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [1.2.0] - 2026-10-14
+
+### Added
+
+- System widgets: CPU, memory and disk gauges, memory and storage usage, and network in/out with a 10-minute sparkline. Sampled from procfs every 5 seconds, no dependencies. Network traffic needs `/proc` mounted read-only and `HOST_PROC` (see README).
+- `/api/metrics` endpoint, `HOST_PROC` and `DISK_PATH` settings, and simulated metrics in demo mode.
+
 ## [1.1.0] - 2026-10-14
 
 ### Added
@@ -21,5 +28,6 @@ All notable changes to this project are documented here. The format follows [Kee
 - Customise panel: wallpapers and uploads, glass blur and frost, icon size, widgets, dock, hidden and renamed apps, custom icons, export/import.
 - Demo mode (`DEMO=true`), Docker image on GHCR, Docker Compose file.
 
+[1.2.0]: https://github.com/younesehb/coolify-dashboard/releases/tag/v1.2.0
 [1.1.0]: https://github.com/younesehb/coolify-dashboard/releases/tag/v1.1.0
 [1.0.0]: https://github.com/younesehb/coolify-dashboard/releases/tag/v1.0.0

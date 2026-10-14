@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { createHash, timingSafeEqual } from 'node:crypto';
 import { demoItems } from './demo.js';
+import { metrics, startMetrics } from './metrics.js';
 
 const COOLIFY_URL = (process.env.COOLIFY_URL || '').replace(/\/$/, '');
 const COOLIFY_PUBLIC_URL = (process.env.COOLIFY_PUBLIC_URL || COOLIFY_URL).replace(/\/$/, '');
@@ -283,6 +284,7 @@ const server = http.createServer(async (req, res) => {
       const d = await api(`/deployments/${dep[1]}`);
       return send(res, 200, { status: d.status });
     }
+    if (url.pathname === '/api/metrics') return send(res, 200, metrics(), 'application/json', { 'Cache-Control': 'no-store' });
     if (url.pathname === '/api/apps') {
       if (url.searchParams.has('fresh')) cache.at = 0;
       return send(res, 200, await loadApps());
@@ -316,6 +318,7 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
+startMetrics(DEMO);
 server.listen(PORT, () => console.log(`Launchpad on :${PORT} → ${DEMO ? 'demo data' : COOLIFY_URL}`));
 // Docker sends SIGTERM on stop; close cleanly instead of waiting to be killed.
 for (const sig of ['SIGTERM', 'SIGINT']) process.on(sig, () => server.close(() => process.exit(0)));

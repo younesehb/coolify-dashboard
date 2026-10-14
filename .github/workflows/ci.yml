@@ -25,6 +25,12 @@ jobs:
           for i in $(seq 1 20); do curl -fs localhost:3000/api/apps > /tmp/apps.json && break; sleep 0.5; done
           node -e "const d=require('/tmp/apps.json'); if (!d.demo || d.items.length < 10) process.exit(1); console.log(d.items.length + ' demo items')"
           curl -fs localhost:3000/ | grep -q '<div id="root">'
+      - name: Host metrics read real /proc
+        run: |
+          PORT=3001 node server.js &
+          sleep 7
+          curl -fs localhost:3001/api/metrics > /tmp/m.json
+          node -e "const m=require('/tmp/m.json'); if (!m.available || !(m.cores > 0) || !(m.memTotal > 0) || !(m.diskTotal > 0) || m.history.length < 1) { console.error(m); process.exit(1) } console.log(m.cores + ' cores, ' + Math.round(m.memTotal/2**30) + ' GB RAM')"
 
   docker:
     runs-on: ubuntu-latest

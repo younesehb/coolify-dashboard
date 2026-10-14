@@ -11,3 +11,7 @@ services:
       COOLIFY_PUBLIC_URL: ${COOLIFY_PUBLIC_URL:-}
       ACTIONS_PASSWORD: ${ACTIONS_PASSWORD:-}
       OWNER_NAME: ${OWNER_NAME:-}
+      # Host network traffic for the Network widget (CPU, memory and disk work without it).
+      HOST_PROC: /host/proc
+    volumes:
+      - /proc:/host/proc:ro

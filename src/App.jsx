@@ -7,6 +7,7 @@ import Grid from './Grid';
 import Settings from './Settings';
 import Peek from './Peek';
 import Folder from './Folder';
+import { NetworkCard, SystemGauges, UsageCard, bytes, systemCaption, useMetrics } from './SystemWidgets';
 import { isFolder } from './Grid';
 import { AppIcon, GithubMark, Num, host, isUp, matches, nameOf, status } from './ui';
 import { SORTS, WALLPAPERS, shrinkImage, useSettings } from './prefs';
@@ -181,7 +182,7 @@ function Spotlight({ items, overrides, onClose }) {
   );
 }
 
-function Widget({ label, children, glass, delay }) {
+function Widget({ label, children, glass, delay, wide }) {
   return (
     <motion.figure
       layout
@@ -189,7 +190,7 @@ function Widget({ label, children, glass, delay }) {
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ type: 'spring', stiffness: 300, damping: 30, delay }}
-      className="flex w-[86%] shrink-0 snap-center flex-col items-center gap-2.5 sm:w-auto"
+      className={`flex w-[86%] shrink-0 snap-center flex-col items-center gap-2.5 sm:w-auto ${wide ? 'sm:col-span-2' : ''}`}
     >
       <GlassSurface width="100%" height={148} borderRadius={28} {...glass}>
         <div className="h-full w-full p-3 text-left">{children}</div>
@@ -428,7 +429,20 @@ export default function App() {
     settings.showLabels,
     query
   ].join('|');
-  const widgetCount = Object.values(settings.widgets).filter(Boolean).length;
+  const W = settings.widgets;
+  const metricsOn = W.system || W.memory || W.storage || W.network;
+  const m = useMetrics(metricsOn);
+  const mOk = !!m?.available;
+  const shown = {
+    system: W.system && mOk,
+    memory: W.memory && mOk,
+    storage: W.storage && mOk && m.diskTotal != null,
+    network: W.network && mOk,
+    health: W.health,
+    attention: W.attention,
+    instance: W.instance
+  };
+  const widgetCount = Object.values(shown).filter(Boolean).length + (shown.network ? 1 : 0);
 
   const openPeek = (item, el) => setPeek({ item, rect: (el.querySelector('div') || el).getBoundingClientRect() });
   const openFolderAt = (folder, el) => {
@@ -693,10 +707,30 @@ export default function App() {
         {widgetCount > 0 && !query && (
           <section className="mx-auto mt-10 grid max-w-[940px] grid-cols-1 gap-6 sm:mt-12">
             <div
-              className={`-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:grid sm:gap-6 sm:overflow-visible sm:px-0 ${widgetCount === 3 ? 'sm:grid-cols-3' : widgetCount === 2 ? 'sm:grid-cols-2' : 'sm:mx-auto sm:w-[320px]'}`}
+              className={`-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:grid sm:gap-6 sm:overflow-visible sm:px-0 ${widgetCount >= 3 ? 'sm:grid-cols-3' : widgetCount === 2 ? 'sm:grid-cols-2' : 'sm:mx-auto sm:w-[320px]'}`}
             >
               <AnimatePresence mode="popLayout">
-                {settings.widgets.health && (
+                {shown.system && (
+                  <Widget key="system" label={systemCaption(m)} glass={glass} delay={0.06}>
+                    <SystemGauges m={m} />
+                  </Widget>
+                )}
+                {shown.network && (
+                  <Widget key="network" label="Network" glass={glass} delay={0.18} wide>
+                    <NetworkCard m={m} />
+                  </Widget>
+                )}
+                {shown.memory && (
+                  <Widget key="memory" label="Memory" glass={glass} delay={0.1}>
+                    <UsageCard
+                      title="Memory"
+                      used={m.memUsed}
+                      total={m.memTotal}
+                      footnote={m.swapTotal ? `${bytes(m.memTotal - m.memUsed)} left · swap ${Math.round((m.swapUsed / m.swapTotal) * 100)}%` : undefined}
+                    />
+                  </Widget>
+                )}
+                {shown.health && (
                   <Widget key="health" label="Health" glass={glass} delay={0.1}>
                     <div className="px-2 py-1">
                       <p className="text-[13px] text-white/75">Running</p>
@@ -718,7 +752,7 @@ export default function App() {
                     </div>
                   </Widget>
                 )}
-                {settings.widgets.instance && (
+                {shown.instance && (
                   <Widget key="instance" label="Instance" glass={glass} delay={0.18}>
                     <div className="flex h-full gap-2">
                       <Pill icon={AppWindow} label="Apps" value={data ? <Num value={items.filter(i => i.kind === 'app').length} /> : '—'} />
@@ -727,7 +761,12 @@ export default function App() {
                     </div>
                   </Widget>
                 )}
-                {settings.widgets.attention && (
+                {shown.storage && (
+                  <Widget key="storage" label="Storage" glass={glass} delay={0.14}>
+                    <UsageCard title="Storage" used={m.diskUsed} total={m.diskTotal} />
+                  </Widget>
+                )}
+                {shown.attention && (
                   <Widget key="attention" label="Needs attention" glass={glass} delay={0.26}>
                     {data && attention.length === 0 && <p className="grid h-full place-items-center text-[15px] text-white/85">All systems running</p>}
                     <ul className="space-y-0.5">

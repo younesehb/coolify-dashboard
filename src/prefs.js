@@ -28,7 +28,7 @@ export const DEFAULTS = {
   glassTint: 0.17,
   iconSize: 76,
   showLabels: true,
-  widgets: { health: true, instance: true, attention: true },
+  widgets: { system: true, network: true, health: true, storage: true, attention: true, memory: false, instance: false },
   showStopped: true,
   showServices: true,
   sort: 'custom',
