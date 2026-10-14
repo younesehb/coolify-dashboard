@@ -15,7 +15,7 @@ Drag icons around, make folders, search, and redeploy from a long-press.
 [![License: MIT](https://img.shields.io/github/license/younesehb/coolify-dashboard?color=8a4f78)](LICENSE)
 [![Stars](https://img.shields.io/github/stars/younesehb/coolify-dashboard?style=flat&color=2a2550)](https://github.com/younesehb/coolify-dashboard/stargazers)
 
-[Try the demo](#try-it-in-10-seconds) · [Deploy](#deploy) · [Configuration](#configuration) · [Security](#security) · [Roadmap](#roadmap) · [Contributing](CONTRIBUTING.md)
+[**Live demo**](https://launchpad-demo.hleli.com) · [Run it locally](#try-it-in-10-seconds) · [Deploy](#deploy) · [Configuration](#configuration) · [Security](#security) · [Roadmap](#roadmap) · [Contributing](CONTRIBUTING.md)
 
 <img src="docs/demo.gif" alt="Launchpad demo: sorting, live search, drag and drop, folders and a redeploy from the peek card" width="800" />
 
@@ -48,7 +48,7 @@ Drag icons around, make folders, search, and redeploy from a long-press.
 
 ## Try it in 10 seconds
 
-No Coolify needed: demo mode serves sample data.
+Open the **[live demo](https://launchpad-demo.hleli.com)** (sample data, resets per browser), or run demo mode yourself. No Coolify needed.
 
 ```sh
 docker run --rm -p 3000:3000 -e DEMO=true ghcr.io/younesehb/coolify-dashboard
