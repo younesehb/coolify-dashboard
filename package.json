@@ -1,6 +1,6 @@
 {
   "name": "coolify-launchpad",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A liquid-glass home screen for every app on your Coolify instance: logos, status, folders, search and one-tap redeploys.",
   "private": true,
   "license": "MIT",

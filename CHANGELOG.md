@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [1.1.0] - 2026-10-14
+
+### Added
+
+- Launchpad logo, favicon, home-screen icons and a web app manifest: add it to your phone's home screen and it opens full screen.
+- Demo GIF, social preview card, FAQ and roadmap in the README.
+
 ## [1.0.0] - 2026-10-14
 
 ### Added
@@ -14,4 +21,5 @@ All notable changes to this project are documented here. The format follows [Kee
 - Customise panel: wallpapers and uploads, glass blur and frost, icon size, widgets, dock, hidden and renamed apps, custom icons, export/import.
 - Demo mode (`DEMO=true`), Docker image on GHCR, Docker Compose file.
 
+[1.1.0]: https://github.com/younesehb/coolify-dashboard/releases/tag/v1.1.0
 [1.0.0]: https://github.com/younesehb/coolify-dashboard/releases/tag/v1.0.0

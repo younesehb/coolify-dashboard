@@ -1,0 +1,14 @@
+{
+  "name": "Launchpad",
+  "short_name": "Launchpad",
+  "description": "A liquid-glass home screen for every app on your Coolify instance.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1a22",
+  "theme_color": "#1a1a22",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/logo.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

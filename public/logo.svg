@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Launchpad">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a2550" />
+      <stop offset="0.55" stop-color="#8a4f78" />
+      <stop offset="1" stop-color="#f0a46c" />
+    </linearGradient>
+    <linearGradient id="frost" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.42" />
+      <stop offset="1" stop-color="#fff" stop-opacity="0.16" />
+    </linearGradient>
+    <radialGradient id="sheen" cx="0.25" cy="0" r="0.9">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.35" />
+      <stop offset="0.6" stop-color="#fff" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="url(#sky)" />
+  <rect width="512" height="512" rx="116" fill="url(#sheen)" />
+  <g stroke="#fff" stroke-opacity="0.55" stroke-width="4">
+    <rect x="112" y="112" width="132" height="132" rx="34" fill="url(#frost)" />
+    <rect x="268" y="112" width="132" height="132" rx="34" fill="#fff" stroke="none" />
+    <rect x="112" y="268" width="132" height="132" rx="34" fill="url(#frost)" />
+    <rect x="268" y="268" width="132" height="132" rx="34" fill="url(#frost)" />
+  </g>
+  <circle cx="334" cy="178" r="26" fill="#f0a46c" />
+</svg>

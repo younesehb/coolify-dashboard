@@ -1,15 +1,23 @@
 <div align="center">
 
-# Launchpad for Coolify
+<img src="public/logo.svg" alt="" width="104" height="104" />
+
+# Launchpad
 
 **A liquid-glass home screen for everything you run on [Coolify].**
-Every app and service with its logo, status and domains, one click away. Drag icons around, make folders, search, and redeploy from a long-press.
 
+Every app and service with its logo, status and domains, one click away.<br />
+Drag icons around, make folders, search, and redeploy from a long-press.
+
+[![Release](https://img.shields.io/github/v/release/younesehb/coolify-dashboard?label=release&color=f0a46c)](https://github.com/younesehb/coolify-dashboard/releases)
 [![CI](https://github.com/younesehb/coolify-dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/younesehb/coolify-dashboard/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Image](https://img.shields.io/badge/ghcr.io-coolify--dashboard-2496ED?logo=docker&logoColor=white)](https://github.com/younesehb/coolify-dashboard/pkgs/container/coolify-dashboard)
+[![Docker image](https://img.shields.io/badge/ghcr.io-coolify--dashboard-2496ED?logo=docker&logoColor=white)](https://github.com/younesehb/coolify-dashboard/pkgs/container/coolify-dashboard)
+[![License: MIT](https://img.shields.io/github/license/younesehb/coolify-dashboard?color=8a4f78)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/younesehb/coolify-dashboard?style=flat&color=2a2550)](https://github.com/younesehb/coolify-dashboard/stargazers)
 
-![Launchpad home screen](docs/screenshots/home.webp)
+[Try the demo](#try-it-in-10-seconds) · [Deploy](#deploy) · [Configuration](#configuration) · [Security](#security) · [Roadmap](#roadmap) · [Contributing](CONTRIBUTING.md)
+
+<img src="docs/demo.gif" alt="Launchpad demo: sorting, live search, drag and drop, folders and a redeploy from the peek card" width="800" />
 
 </div>
 
@@ -30,6 +38,13 @@ Every app and service with its logo, status and domains, one click away. Drag ic
 | Peek card and actions                    | Folders                                 | Phone                                  |
 | ---------------------------------------- | --------------------------------------- | -------------------------------------- |
 | ![Peek card](docs/screenshots/peek.webp) | ![Folder](docs/screenshots/folder.webp) | ![Phone](docs/screenshots/mobile.webp) |
+
+<details>
+<summary>Full-size screenshot</summary>
+
+![Launchpad home screen](docs/screenshots/home.webp)
+
+</details>
 
 ## Try it in 10 seconds
 
@@ -92,6 +107,53 @@ Read this before putting Launchpad on the internet.
 
 Found a vulnerability? See [SECURITY.md](SECURITY.md).
 
+## FAQ
+
+<details>
+<summary><b>Does it change anything in Coolify?</b></summary>
+
+Only when you use an action (Redeploy, Restart, Stop, Start), and only if you set `ACTIONS_PASSWORD`. Everything else is read-only.
+
+</details>
+
+<details>
+<summary><b>Where are my folders, order and wallpaper stored?</b></summary>
+
+In your browser's local storage. Each browser or device has its own layout. Use **Customise → Export / Import** to copy a setup to another device.
+
+</details>
+
+<details>
+<summary><b>An app shows a letter instead of its logo.</b></summary>
+
+Launchpad looks for a touch icon or favicon on the app's first domain. If the site is behind a login or has no icon, it falls back to a monogram. Right-click the icon → **Rename or change icon** to set any image.
+
+</details>
+
+<details>
+<summary><b>"Coolify isn't answering"</b></summary>
+
+Check that the server can reach `COOLIFY_URL` and that the token is valid. If Coolify sits behind Cloudflare Access or another login, run Launchpad on the same server and use `COOLIFY_URL=http://coolify:8080`.
+
+</details>
+
+<details>
+<summary><b>Can I install it on my phone?</b></summary>
+
+Yes. Open it in Safari or Chrome and use **Add to Home Screen**; it launches full screen like an app.
+
+</details>
+
+## Roadmap
+
+Ideas we would like to build. Upvote or pick one up in [issues](https://github.com/younesehb/coolify-dashboard/issues?q=is%3Aissue+is%3Aopen+label%3Aroadmap):
+
+- Home-screen pages with swipe and a page indicator
+- App Library page grouped by project, status and recent deploys
+- Focus modes: saved views with their own apps, wallpaper and widgets
+- Notification Center with the history of status changes and deploys
+- More widget sizes, including deploy activity
+
 ## How it works
 
 ```
@@ -122,6 +184,12 @@ npm run dev                  # Vite on :5173, proxies /api to :3000
 ```
 
 `npm run check` runs formatting, a syntax check of the server, and a production build. CI runs the same plus a demo-mode smoke test and a Docker build. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Contributors
+
+Thanks to everyone who helps make Launchpad better.
+
+<a href="https://github.com/younesehb/coolify-dashboard/graphs/contributors"><img src="https://contrib.rocks/image?repo=younesehb/coolify-dashboard" alt="Contributors" /></a>
 
 ## Credits
 
