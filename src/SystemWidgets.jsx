@@ -96,7 +96,7 @@ export function SystemGauges({ m }) {
   );
 }
 
-export const systemCaption = m => `System · ${m.cores} cores · up ${duration(m.uptime)}`;
+export const systemCaption = () => 'System';
 
 // "4.6 GB / 8.2 GB, 3.6 GB left" card used for memory and storage.
 export function UsageCard({ title, used, total, footnote }) {
@@ -166,5 +166,124 @@ export function NetworkCard({ m }) {
         <p className="ml-auto text-[11px] text-white/60">last {Math.round((pts.length * m.interval) / 60000) || 1} min</p>
       </div>
     </div>
+  );
+}
+
+const serverName = m => m.system?.hostname || m.system?.serverName || 'Server';
+const platform = m => `${m.system?.os || 'Linux'} · ${m.system?.arch || ''}`;
+const shortCpu = s =>
+  (s || '')
+    .replace(/\s*\d+-Core Processor/i, '')
+    .replace(/\s*CPU @.*/i, '')
+    .replace(/\s+Processor$/i, '');
+
+function ServerGlyph({ size = 52 }) {
+  return (
+    <span
+      className="grid shrink-0 place-items-center rounded-[23%] shadow-[0_6px_18px_-6px_rgb(0_0_0/0.6),inset_0_1px_0_rgb(255_255_255/0.35)]"
+      style={{ width: size, height: size, background: 'linear-gradient(160deg, #3a3550, #16141f)' }}
+    >
+      <svg viewBox="0 0 24 24" width={size * 0.56} height={size * 0.56} fill="none" stroke="white" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true">
+        <rect x="3" y="3.5" width="18" height="7" rx="2" />
+        <rect x="3" y="13.5" width="18" height="7" rx="2" />
+        <circle cx="7" cy="7" r="0.9" fill="#7CE38B" stroke="none" />
+        <circle cx="7" cy="17" r="0.9" fill="#7CE38B" stroke="none" />
+        <path d="M11 7h6M11 17h6" opacity="0.55" />
+      </svg>
+    </span>
+  );
+}
+
+export function ServerCard({ m, onOpen }) {
+  const s = m.system || {};
+  return (
+    <button type="button" onClick={onOpen} className="flex h-full w-full flex-col justify-between rounded-[20px] px-2 py-1 text-left outline-none">
+      <span className="flex items-center gap-3">
+        <ServerGlyph size={44} />
+        <span className="min-w-0">
+          <span className="block truncate text-[19px] font-semibold leading-tight">{serverName(m)}</span>
+          <span className="block truncate text-[12px] text-white/70">{platform(m)}</span>
+        </span>
+      </span>
+      <span className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-0.5 text-[12px] text-white/80">
+        <span className="col-span-2 truncate" title={s.cpuModel || ''}>
+          {shortCpu(s.cpuModel) || 'CPU'} · {m.cores} cores
+        </span>
+        <span className="truncate">
+          {bytes(m.memTotal, 0)} RAM · {bytes(m.diskTotal, 0)} disk
+        </span>
+        <span className="text-right">Up {duration(m.uptime)}</span>
+      </span>
+    </button>
+  );
+}
+
+// macOS "About This Mac", for the server.
+export function AboutServer({ m, coolifyUrl, onClose }) {
+  const s = m.system || {};
+  useEffect(() => {
+    const k = e => e.key === 'Escape' && onClose();
+    window.addEventListener('keydown', k);
+    return () => window.removeEventListener('keydown', k);
+  }, [onClose]);
+  const rows = [
+    ['Name', serverName(m)],
+    ['Operating system', s.os],
+    ['Kernel', s.kernel],
+    ['Architecture', s.arch],
+    ['Processor', s.cpuModel],
+    ['Cores', m.cores],
+    ['Platform', s.virtual ? 'Virtual machine' : 'Bare metal'],
+    ['Memory', `${bytes(m.memUsed)} used of ${bytes(m.memTotal)}`],
+    m.swapTotal ? ['Swap', `${bytes(m.swapUsed)} used of ${bytes(m.swapTotal)}`] : null,
+    m.diskTotal != null ? ['Disk', `${bytes(m.diskUsed)} used of ${bytes(m.diskTotal)}`] : null,
+    ['Uptime', duration(m.uptime)],
+    ['Load average', m.load.map(l => l.toFixed(2)).join('  ')],
+    s.coolifyVersion ? ['Coolify', s.coolifyVersion] : null
+  ].filter(r => r && r[1] != null && r[1] !== '');
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 grid place-items-center bg-black/35 px-4 backdrop-blur-sm"
+      onPointerDown={e => e.target === e.currentTarget && onClose()}
+    >
+      <motion.div
+        role="dialog"
+        aria-label="About this server"
+        initial={{ opacity: 0, scale: 0.94, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.96 }}
+        transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+        className="glass glass-dark w-full max-w-md rounded-[30px] p-7 text-center"
+      >
+        <div className="flex justify-center">
+          <ServerGlyph size={92} />
+        </div>
+        <h2 className="mt-4 text-[26px] font-semibold tracking-tight">{serverName(m)}</h2>
+        <p className="text-[14px] text-white/65">{platform(m)}</p>
+        <dl className="mt-6 grid grid-cols-[auto_minmax(0,1fr)] gap-x-5 gap-y-2 text-left text-[13px]">
+          {rows.map(([k, v]) => (
+            <div key={k} className="contents">
+              <dt className="text-right text-white/55">{k}</dt>
+              <dd className="truncate tabular-nums" title={String(v)}>
+                {v}
+              </dd>
+            </div>
+          ))}
+        </dl>
+        <div className="mt-7 flex justify-center gap-2">
+          {coolifyUrl && (
+            <a href={coolifyUrl} target="_blank" rel="noreferrer" className="rounded-full bg-white/12 px-4 py-2 text-[13px] font-medium hover:bg-white/20">
+              Open Coolify
+            </a>
+          )}
+          <button onClick={onClose} className="rounded-full bg-white px-4 py-2 text-[13px] font-semibold text-black hover:bg-white/90">
+            Done
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
   );
 }

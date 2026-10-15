@@ -7,7 +7,7 @@ import Grid from './Grid';
 import Settings from './Settings';
 import Peek from './Peek';
 import Folder from './Folder';
-import { NetworkCard, SystemGauges, UsageCard, bytes, systemCaption, useMetrics } from './SystemWidgets';
+import { AboutServer, NetworkCard, ServerCard, SystemGauges, UsageCard, bytes, systemCaption, useMetrics } from './SystemWidgets';
 import { isFolder } from './Grid';
 import { AppIcon, GithubMark, Num, host, isUp, matches, nameOf, status } from './ui';
 import { SORTS, WALLPAPERS, shrinkImage, useSettings } from './prefs';
@@ -229,6 +229,7 @@ export default function App() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [peek, setPeek] = useState(null);
+  const [about, setAbout] = useState(false);
   const [openFolder, setOpenFolder] = useState(null);
   const [jobs, setJobs] = useState({});
   const [actionsKey, setActionsKey] = useState(() => {
@@ -430,10 +431,11 @@ export default function App() {
     query
   ].join('|');
   const W = settings.widgets;
-  const metricsOn = W.system || W.memory || W.storage || W.network;
+  const metricsOn = W.server || W.system || W.memory || W.storage || W.network;
   const m = useMetrics(metricsOn);
   const mOk = !!m?.available;
   const shown = {
+    server: W.server && mOk,
     system: W.system && mOk,
     memory: W.memory && mOk,
     storage: W.storage && mOk && m.diskTotal != null,
@@ -710,14 +712,19 @@ export default function App() {
               className={`-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:grid sm:gap-6 sm:overflow-visible sm:px-0 ${widgetCount >= 3 ? 'sm:grid-cols-3' : widgetCount === 2 ? 'sm:grid-cols-2' : 'sm:mx-auto sm:w-[320px]'}`}
             >
               <AnimatePresence mode="popLayout">
-                {shown.system && (
-                  <Widget key="system" label={systemCaption(m)} glass={glass} delay={0.06}>
-                    <SystemGauges m={m} />
+                {shown.server && (
+                  <Widget key="server" label="Server" glass={glass} delay={0.04}>
+                    <ServerCard m={m} onOpen={() => setAbout(true)} />
                   </Widget>
                 )}
                 {shown.network && (
                   <Widget key="network" label="Network" glass={glass} delay={0.18} wide>
                     <NetworkCard m={m} />
+                  </Widget>
+                )}
+                {shown.system && (
+                  <Widget key="system" label={systemCaption(m)} glass={glass} delay={0.06}>
+                    <SystemGauges m={m} />
                   </Widget>
                 )}
                 {shown.memory && (
@@ -921,6 +928,7 @@ export default function App() {
             onRemove={appId => removeFromFolder(openFolder.id, appId)}
           />
         )}
+        {about && mOk && <AboutServer key="about" m={m} coolifyUrl={data?.coolifyUrl} onClose={() => setAbout(false)} />}
         {peek && (
           <Peek
             key={`peek-${peek.item.id}`}

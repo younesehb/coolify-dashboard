@@ -155,6 +155,7 @@ export default function Settings({ settings, update, reset, replace, items, onCl
             <Toggle label="Greeting" checked={settings.showGreeting} onChange={showGreeting => update({ showGreeting })} />
             <Toggle label="Search bar" checked={settings.showSearch} onChange={showSearch => update({ showSearch })} />
             {[
+              ['server', 'Server widget (name and specs)'],
               ['system', 'System widget (CPU, memory, disk)'],
               ['memory', 'Memory widget'],
               ['storage', 'Storage widget'],

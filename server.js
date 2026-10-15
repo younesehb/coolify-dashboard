@@ -254,6 +254,30 @@ const send = (res, code, body, type = 'application/json', extra = {}) => {
   res.end(typeof body === 'string' || Buffer.isBuffer(body) ? body : JSON.stringify(body));
 };
 
+// Coolify version and server name for the "About this server" card, fetched once and refreshed hourly.
+let facts = { at: 0, data: {} };
+async function serverFacts() {
+  if (DEMO || Date.now() - facts.at < 3600_000) return facts.data;
+  facts.at = Date.now();
+  const [version, servers] = await Promise.all([
+    fetch(`${COOLIFY_URL}/api/v1/version`, { headers: { Authorization: `Bearer ${TOKEN}` }, signal: AbortSignal.timeout(5000) })
+      .then(r => (r.ok ? r.text() : null))
+      .catch(() => null),
+    api('/servers').catch(() => [])
+  ]);
+  let instance = null;
+  try {
+    instance = new URL(COOLIFY_PUBLIC_URL).hostname;
+  } catch {}
+  const named = servers.find(s => s.name && s.name !== 'localhost');
+  facts.data = {
+    coolifyVersion: version?.replace(/"/g, '').trim() || null,
+    serverName: process.env.SERVER_NAME || named?.name || instance,
+    servers: servers.length || null
+  };
+  return facts.data;
+}
+
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://x');
   try {
@@ -284,7 +308,7 @@ const server = http.createServer(async (req, res) => {
       const d = await api(`/deployments/${dep[1]}`);
       return send(res, 200, { status: d.status });
     }
-    if (url.pathname === '/api/metrics') return send(res, 200, metrics(), 'application/json', { 'Cache-Control': 'no-store' });
+    if (url.pathname === '/api/metrics') return send(res, 200, metrics(await serverFacts()), 'application/json', { 'Cache-Control': 'no-store' });
     if (url.pathname === '/api/apps') {
       if (url.searchParams.has('fresh')) cache.at = 0;
       return send(res, 200, await loadApps());

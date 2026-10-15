@@ -32,13 +32,13 @@ Drag icons around, make folders, search, and redeploy from a long-press.
 - **Search** as you type, or `⌘K` for a Spotlight-style finder. `/` jumps to search.
 - **Sort** by your order, name, status, most recent deploy or project, with animated reflow.
 - **Live status.** Refreshes in the background and tells you when something goes down or comes back.
-- **Server stats.** CPU, memory, disk, load, uptime and network in/out with a 10-minute sparkline.
+- **Server at a glance.** Device name, OS, kernel, CPU model, memory and disk, with an *About This Server* sheet. Live CPU, memory, disk, load, uptime and network in/out with a 10-minute sparkline.
 - **Make it yours.** Wallpapers (or upload your own), glass blur and frost, icon size, widgets, dock, labels, hidden apps, renamed apps, custom icons. Export and import your setup.
 - **Works on phones.** Four icons per row, swipeable widgets, touch-and-hold to drag.
 
-| Peek card and actions                    | Folders                                 | Phone                                  |
-| ---------------------------------------- | --------------------------------------- | -------------------------------------- |
-| ![Peek card](docs/screenshots/peek.webp) | ![Folder](docs/screenshots/folder.webp) | ![Phone](docs/screenshots/mobile.webp) |
+| Peek card and actions                    | Folders                                 | About This Server                        | Phone                                  |
+| ---------------------------------------- | --------------------------------------- | ---------------------------------------- | -------------------------------------- |
+| ![Peek card](docs/screenshots/peek.webp) | ![Folder](docs/screenshots/folder.webp) | ![About](docs/screenshots/about.webp)    | ![Phone](docs/screenshots/mobile.webp) |
 
 <details>
 <summary>Full-size screenshot</summary>
@@ -93,6 +93,7 @@ COOLIFY_URL=https://coolify.example.com COOLIFY_TOKEN=... docker compose up -d
 | `OWNER_NAME`         | no       | Name in the greeting ("Good morning, Ada.").                                                                  |
 | `DEMO`               | no       | `true` serves sample data and fake actions. No Coolify needed.                                                |
 | `PORT`               | no       | Port to listen on. Default `3000`.                                                                            |
+| `SERVER_NAME`        | no       | Name shown on the Server widget. Defaults to the host name, else Coolify's server name, else the Coolify domain. |
 | `HOST_PROC`          | no       | Where the host's `/proc` is mounted (e.g. `/host/proc`). Needed only for host network traffic.                |
 | `DISK_PATH`          | no       | Filesystem the Storage widget reports. Default `/`, which inside Docker is the disk Docker lives on.          |
 
@@ -100,7 +101,7 @@ Everything else (wallpaper, layout, folders, hidden apps…) is a per-browser pr
 
 ## System metrics
 
-The **System**, **Memory**, **Storage** and **Network** widgets show live host stats, sampled every 5 seconds with 10 minutes of history (Linux hosts only).
+The **Server** widget shows the device name, OS, kernel, CPU model and specs (tap it for *About This Server*). The **System**, **Memory**, **Storage** and **Network** widgets show live host stats, sampled every 5 seconds with 10 minutes of history (Linux hosts only).
 
 - **CPU, memory, load, uptime and disk work out of the box**: inside a container `/proc` already describes the host, and `/` is the disk Docker lives on.
 - **Network in/out needs one read-only mount**, because a container only sees its own traffic: mount `/proc:/host/proc:ro` and set `HOST_PROC=/host/proc`. The included `docker-compose.yml` does this. On Coolify add a **Directory mount** with source `/proc` and destination `/host/proc:ro`.

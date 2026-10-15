@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [1.3.0] - 2026-10-15
+
+### Added
+
+- Server widget with the device name, OS, CPU model, memory, disk and uptime, and an *About This Server* sheet with kernel, architecture, platform, load and Coolify version. `SERVER_NAME` overrides the name.
+- A status dot on every app and folder icon, and real framework and service logos in the demo.
+
+### Changed
+
+- Demo mode now describes an obviously fictional machine; it never reads the host it runs on.
+- Image builds time out after 30 minutes and newer pushes supersede running builds.
+
 ## [1.2.0] - 2026-10-14
 
 ### Added
@@ -28,6 +40,7 @@ All notable changes to this project are documented here. The format follows [Kee
 - Customise panel: wallpapers and uploads, glass blur and frost, icon size, widgets, dock, hidden and renamed apps, custom icons, export/import.
 - Demo mode (`DEMO=true`), Docker image on GHCR, Docker Compose file.
 
+[1.3.0]: https://github.com/younesehb/coolify-dashboard/releases/tag/v1.3.0
 [1.2.0]: https://github.com/younesehb/coolify-dashboard/releases/tag/v1.2.0
 [1.1.0]: https://github.com/younesehb/coolify-dashboard/releases/tag/v1.1.0
 [1.0.0]: https://github.com/younesehb/coolify-dashboard/releases/tag/v1.0.0
