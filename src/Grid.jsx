@@ -64,13 +64,23 @@ export function Tile({ item, index = 0, settings, jiggle, pulse, job, mergeTarge
     >
       <div
         style={{ animationDelay: `-${(index % 7) * 61}ms` }}
-        className={`relative transition-transform duration-300 ease-spring group-hover:-translate-y-1 group-hover:scale-[1.06] group-active:scale-95 ${jiggle ? 'wiggle' : ''} ${mergeTarget ? 'scale-[1.12]' : ''} ${s.key === 'down' && !job ? 'opacity-55 grayscale-[0.6]' : ''}`}
+        className={`relative transition-transform duration-300 ease-spring group-hover:-translate-y-1 group-hover:scale-[1.06] group-active:scale-95 ${jiggle ? 'wiggle' : ''} ${mergeTarget ? 'scale-[1.12]' : ''}`}
       >
         {mergeTarget && <span className="glass absolute -inset-3 -z-10 rounded-[26%]" aria-hidden="true" />}
-        <AppIcon item={item} overrides={settings.overrides} size={settings.iconSize} className={job && job.status !== 'finished' ? 'brightness-75' : ''} />
+        <AppIcon
+          item={item}
+          overrides={settings.overrides}
+          size={settings.iconSize}
+          className={job && job.status !== 'finished' ? 'brightness-75' : s.key === 'down' ? 'opacity-55 grayscale-[0.6]' : ''}
+        />
         {job && <Ring job={job} size={settings.iconSize} />}
-        {s.key !== 'up' && !job && (
-          <span className={`absolute -right-1 -top-1 size-3.5 rounded-full ${s.dot} ring-2 ring-black/25 ${pulse ? 'ping-once' : ''}`} aria-label={s.label} />
+        {/* Every icon carries its status: green running, amber unhealthy, red stopped. */}
+        {!job && (
+          <span
+            className={`absolute -right-1 -top-1 size-3.5 rounded-full ${s.dot} shadow-[0_1px_3px_rgb(0_0_0/0.4)] ring-2 ring-white/80 ${pulse ? 'ping-once' : ''}`}
+            role="img"
+            aria-label={s.label}
+          />
         )}
         {pulse && s.key === 'up' && <span className="ping-ring absolute inset-0 rounded-[23%]" aria-hidden="true" />}
       </div>
@@ -105,7 +115,11 @@ function FolderTile({ folder, settings, jiggle, mergeTarget, onOpen }) {
             <AppIcon key={a.id} item={a} overrides={settings.overrides} size={cell} className="!shadow-none" />
           ))}
         </div>
-        {worst > 0 && <span className={`absolute -right-1 -top-1 size-3.5 rounded-full ${worst === 2 ? 'bg-down' : 'bg-warn'} ring-2 ring-black/25`} />}
+        <span
+          className={`absolute -right-1 -top-1 size-3.5 rounded-full ${['bg-up', 'bg-warn', 'bg-down'][worst]} shadow-[0_1px_3px_rgb(0_0_0/0.4)] ring-2 ring-white/80`}
+          role="img"
+          aria-label={['All running', 'Something is unhealthy', 'Something is stopped'][worst]}
+        />
       </div>
       {settings.showLabels && (
         <span className="label max-w-full truncate px-1 text-[13px] font-medium text-white" style={{ maxWidth: size + 36 }}>

@@ -130,7 +130,7 @@ async function loadApps() {
         owner: process.env.OWNER_NAME || '',
         actions: true,
         demo: true,
-        items: demoItems(await serviceLogos())
+        items: demoItems()
       }
     };
     return cache.data;
