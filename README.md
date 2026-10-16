@@ -17,13 +17,16 @@ Drag icons around, make folders, search, and redeploy from a long-press.
 
 [**Live demo**](https://launchpad-demo.hleli.com) · [Run it locally](#try-it-in-10-seconds) · [Deploy](#deploy) · [Configuration](#configuration) · [Security](#security) · [Roadmap](#roadmap) · [Contributing](CONTRIBUTING.md)
 
-<img src="docs/demo.gif" alt="Launchpad demo: sorting, live search, drag and drop, folders and a redeploy from the peek card" width="800" />
+<img src="docs/demo.gif" alt="Launchpad demo: sorting, live search, drag and drop, folders and a redeploy from the peek card" width="760" />
 
 </div>
 
 ## Features
 
-- **Pulls everything from Coolify.** Give it an API token; applications, one-click services, projects, environments, domains and status are read live. Nothing to configure per app.
+- **Pulls everything from Coolify.** Give it an API token; applications, one-click services, databases, projects, environments, domains and status are read live. Nothing to configure per app.
+- **Your own links.** Add any website or tool as an icon next to your apps (dock **+**), with its site icon or your own. Drag them into folders like everything else.
+- **Coolify at a glance.** Widgets for projects, servers, apps and databases, and the latest deployments with their commit and result.
+- **Containers browser.** Every Docker container with live CPU, memory and network, sortable and searchable, grouped by project; each app's peek card lists its own containers. Read-only, through a Docker socket proxy.
 - **Real logos.** Service icons come from Coolify's own template catalog; apps use their site's favicon or touch icon. No logo? You get a tidy monogram, or set your own.
 - **iPhone-style home screen.** Wallpaper, greeting, glass widgets (health, instance totals, what needs attention), an icon grid and a magnifying dock.
 - **Direct drag and drop.** Drag any icon to rearrange; your order is saved. Hold an icon over another to make a **folder**, like iOS.
@@ -36,9 +39,9 @@ Drag icons around, make folders, search, and redeploy from a long-press.
 - **Make it yours.** Wallpapers (or upload your own), glass blur and frost, icon size, widgets, dock, labels, hidden apps, renamed apps, custom icons. Export and import your setup.
 - **Works on phones.** Four icons per row, swipeable widgets, touch-and-hold to drag.
 
-| Peek card and actions                    | Folders                                 | About This Server                        | Phone                                  |
-| ---------------------------------------- | --------------------------------------- | ---------------------------------------- | -------------------------------------- |
-| ![Peek card](docs/screenshots/peek.webp) | ![Folder](docs/screenshots/folder.webp) | ![About](docs/screenshots/about.webp)    | ![Phone](docs/screenshots/mobile.webp) |
+| Containers                                        | Peek card and actions                    | About This Server                     | Phone                                  |
+| ------------------------------------------------- | ---------------------------------------- | ------------------------------------- | -------------------------------------- |
+| ![Containers](docs/screenshots/containers.webp)   | ![Peek card](docs/screenshots/peek.webp) | ![About](docs/screenshots/about.webp) | ![Phone](docs/screenshots/mobile.webp) |
 
 <details>
 <summary>Full-size screenshot</summary>
@@ -94,6 +97,7 @@ COOLIFY_URL=https://coolify.example.com COOLIFY_TOKEN=... docker compose up -d
 | `DEMO`               | no       | `true` serves sample data and fake actions. No Coolify needed.                                                |
 | `PORT`               | no       | Port to listen on. Default `3000`.                                                                            |
 | `SERVER_NAME`        | no       | Name shown on the Server widget. Defaults to the host name, else Coolify's server name, else the Coolify domain. |
+| `DOCKER_HOST`        | no       | Docker API for the containers browser, e.g. `http://docker-proxy:2375`. See *Containers*.                    |
 | `HOST_PROC`          | no       | Where the host's `/proc` is mounted (e.g. `/host/proc`). Needed only for host network traffic.                |
 | `DISK_PATH`          | no       | Filesystem the Storage widget reports. Default `/`, which inside Docker is the disk Docker lives on.          |
 
@@ -107,6 +111,24 @@ The **Server** widget shows the device name, OS, kernel, CPU model and specs (ta
 - **Network in/out needs one read-only mount**, because a container only sees its own traffic: mount `/proc:/host/proc:ro` and set `HOST_PROC=/host/proc`. The included `docker-compose.yml` does this. On Coolify add a **Directory mount** with source `/proc` and destination `/host/proc:ro`.
 
 The mount lets the container read host process information. Launchpad runs as a non-root user and only reads `stat`, `meminfo`, `loadavg`, `uptime` and the host's network counters, but if that trade-off is not for you, skip the mount and the Network widget explains what it needs.
+
+## Containers
+
+The containers browser reads Docker's API. Point Launchpad at a **read-only socket proxy** rather than mounting the Docker socket into it: the proxy only lets `GET /containers` through, so even a compromised dashboard cannot start, stop or exec anything.
+
+```yaml
+  docker-proxy:
+    image: ghcr.io/tecnativa/docker-socket-proxy:latest
+    restart: unless-stopped
+    environment:
+      CONTAINERS: 1 # list containers and read their stats; everything else stays denied
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+```
+
+Then set `DOCKER_HOST=http://docker-proxy:2375` on Launchpad (both on the same Docker network, no published port). The included `docker-compose.yml` has this wired up. On Coolify, add the proxy as a *Docker Image* resource without a domain, on the same server, and use its container name in `DOCKER_HOST`.
+
+Launchpad only sends `GET` requests and never forwards environment variables, labels it does not need, or logs.
 
 ## Security
 

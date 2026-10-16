@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { AppWindow, Boxes, Globe, RotateCw, Search, Server, Settings2, Upload, X } from 'lucide-react';
+import { AppWindow, Boxes, Container, Globe, Plus, RotateCw, Search, Server, Settings2, Upload, X } from 'lucide-react';
 import GlassSurface from './bits/GlassSurface';
 import Dock from './bits/Dock';
 import Grid from './Grid';
 import Settings from './Settings';
 import Peek from './Peek';
 import Folder from './Folder';
+import { AppContainers, ContainersCard, ContainersView, CoolifyCard, DeploymentsCard, LinkEditor, linkIcons, usePoll } from './Coolify';
 import { AboutServer, NetworkCard, ServerCard, SystemGauges, UsageCard, bytes, systemCaption, useMetrics } from './SystemWidgets';
 import { isFolder } from './Grid';
 import { AppIcon, GithubMark, Num, host, isUp, matches, nameOf, status } from './ui';
@@ -230,6 +231,8 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [peek, setPeek] = useState(null);
   const [about, setAbout] = useState(false);
+  const [linkEdit, setLinkEdit] = useState(null);
+  const [containersOpen, setContainersOpen] = useState(false);
   const [openFolder, setOpenFolder] = useState(null);
   const [jobs, setJobs] = useState({});
   const [actionsKey, setActionsKey] = useState(() => {
@@ -360,12 +363,30 @@ export default function App() {
     return m;
   }, [settings.folders]);
 
+  // Custom links behave like apps on the grid (drag, folders, search) but have no status.
+  const linkItems = useMemo(
+    () =>
+      settings.links.map(l => ({
+        id: l.id,
+        kind: 'link',
+        name: l.name,
+        description: host(l.url),
+        urls: [l.url],
+        state: 'link',
+        logo: l.icon || null,
+        icons: linkIcons(l.url),
+        updatedAt: null
+      })),
+    [settings.links]
+  );
+  const allItems = useMemo(() => [...items, ...linkItems], [items, linkItems]);
+
   // The grid shows loose apps plus folders. Searching flattens folders so every match is visible.
   const entries = useMemo(() => {
-    const apps = items
+    const apps = allItems
       .filter(i => !settings.hidden.includes(i.id))
       .filter(i => settings.showStopped || status(i).key !== 'down')
-      .filter(i => settings.showServices || i.kind === 'app')
+      .filter(i => settings.showServices || i.kind !== 'service')
       .filter(i => matches(i, query, overrides));
     const byId = new Map(apps.map(a => [a.id, a]));
     const list = query
@@ -389,7 +410,7 @@ export default function App() {
       project: (a, b) => (isFolder(a) ? a.name : a.project || '').localeCompare(isFolder(b) ? b.name : b.project || '') || byName(a, b)
     };
     return list.sort(sorters[settings.sort] || sorters.name);
-  }, [items, settings, query, overrides, folderOf]);
+  }, [allItems, settings, query, overrides, folderOf]);
 
   const up = items.filter(isUp).length;
   const attention = items.filter(i => !isUp(i));
@@ -434,8 +455,13 @@ export default function App() {
   const metricsOn = W.server || W.system || W.memory || W.storage || W.network;
   const m = useMetrics(metricsOn);
   const mOk = !!m?.available;
+  const coolifyStats = usePoll('/api/coolify', !!data && (W.coolify || W.deployments), 30000);
+  const containersData = usePoll('/api/containers', !!data?.containers && (containersOpen || W.containers || !!peek), containersOpen ? 4000 : 10000);
   const shown = {
     server: W.server && mOk,
+    coolify: W.coolify && !!data,
+    deployments: W.deployments && !!data,
+    containers: W.containers && !!data?.containers && containersData?.available !== false,
     system: W.system && mOk,
     memory: W.memory && mOk,
     storage: W.storage && mOk && m.diskTotal != null,
@@ -444,7 +470,7 @@ export default function App() {
     attention: W.attention,
     instance: W.instance
   };
-  const widgetCount = Object.values(shown).filter(Boolean).length + (shown.network ? 1 : 0);
+  const widgetCount = Object.values(shown).filter(Boolean).length + (shown.network ? 1 : 0) + (shown.containers ? 1 : 0);
 
   const openPeek = (item, el) => setPeek({ item, rect: (el.querySelector('div') || el).getBoundingClientRect() });
   const openFolderAt = (folder, el) => {
@@ -455,7 +481,7 @@ export default function App() {
   // Drop an app onto another app to make a folder, or onto a folder to add it.
   const merge = (activeId, targetId, ids) => {
     const target = entries.find(e => e.id === targetId);
-    const dragged = items.find(i => i.id === activeId);
+    const dragged = allItems.find(i => i.id === activeId);
     if (!dragged || !target) return;
     navigator.vibrate?.(12);
     update(s => {
@@ -576,6 +602,24 @@ export default function App() {
         </DockTile>
       ),
       onClick: () => setSpotlight(true)
+    },
+    data?.containers && {
+      label: 'Containers',
+      icon: (
+        <DockTile bg="linear-gradient(160deg,#2f80ed,#1b4fb6)">
+          <Container className="size-[46%] text-white" strokeWidth={1.75} />
+        </DockTile>
+      ),
+      onClick: () => setContainersOpen(true)
+    },
+    {
+      label: 'Add link',
+      icon: (
+        <DockTile bg="linear-gradient(160deg,#ffd36b,#ff9f43)">
+          <Plus className="size-[50%] text-white" strokeWidth={2.25} />
+        </DockTile>
+      ),
+      onClick: () => setLinkEdit({})
     },
     {
       label: 'Wallpaper',
@@ -737,6 +781,53 @@ export default function App() {
                     />
                   </Widget>
                 )}
+                {shown.coolify && (
+                  <Widget key="coolify" label="Coolify" glass={glass} delay={0.12}>
+                    <CoolifyCard stats={coolifyStats} up={up} total={items.length} />
+                  </Widget>
+                )}
+                {shown.attention && (
+                  <Widget key="attention" label="Needs attention" glass={glass} delay={0.26}>
+                    {data && attention.length === 0 && <p className="grid h-full place-items-center text-[15px] text-white/85">All systems running</p>}
+                    <ul className="space-y-0.5">
+                      {attention.slice(0, attention.length > 3 ? 2 : 3).map(i => {
+                        const s = status(i);
+                        return (
+                          <li key={i.id}>
+                            <a
+                              href={i.manage || i.urls[0]}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 outline-none hover:bg-white/15 focus-visible:bg-white/15"
+                            >
+                              <AppIcon item={i} overrides={overrides} size={28} />
+                              <span className="min-w-0 flex-1 truncate text-[13px] font-medium">{nameOf(i, overrides)}</span>
+                              <span className="flex items-center gap-1.5 text-[12px] text-white/80">
+                                <span className={`size-1.5 rounded-full ${s.dot}`} />
+                                {s.label}
+                              </span>
+                            </a>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                    {attention.length > 3 && (
+                      <button onClick={() => update({ sort: 'status' })} className="px-2 pt-1 text-[12px] text-white/75 underline-offset-2 hover:underline">
+                        and {attention.length - 2} more
+                      </button>
+                    )}
+                  </Widget>
+                )}
+                {shown.deployments && (
+                  <Widget key="deployments" label="Deployments" glass={glass} delay={0.2}>
+                    <DeploymentsCard stats={coolifyStats} />
+                  </Widget>
+                )}
+                {shown.containers && (
+                  <Widget key="containers" label="Containers" glass={glass} delay={0.24} wide>
+                    <ContainersCard data={containersData} onOpen={() => setContainersOpen(true)} />
+                  </Widget>
+                )}
                 {shown.health && (
                   <Widget key="health" label="Health" glass={glass} delay={0.1}>
                     <div className="px-2 py-1">
@@ -771,38 +862,6 @@ export default function App() {
                 {shown.storage && (
                   <Widget key="storage" label="Storage" glass={glass} delay={0.14}>
                     <UsageCard title="Storage" used={m.diskUsed} total={m.diskTotal} />
-                  </Widget>
-                )}
-                {shown.attention && (
-                  <Widget key="attention" label="Needs attention" glass={glass} delay={0.26}>
-                    {data && attention.length === 0 && <p className="grid h-full place-items-center text-[15px] text-white/85">All systems running</p>}
-                    <ul className="space-y-0.5">
-                      {attention.slice(0, attention.length > 3 ? 2 : 3).map(i => {
-                        const s = status(i);
-                        return (
-                          <li key={i.id}>
-                            <a
-                              href={i.manage || i.urls[0]}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 outline-none hover:bg-white/15 focus-visible:bg-white/15"
-                            >
-                              <AppIcon item={i} overrides={overrides} size={28} />
-                              <span className="min-w-0 flex-1 truncate text-[13px] font-medium">{nameOf(i, overrides)}</span>
-                              <span className="flex items-center gap-1.5 text-[12px] text-white/80">
-                                <span className={`size-1.5 rounded-full ${s.dot}`} />
-                                {s.label}
-                              </span>
-                            </a>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                    {attention.length > 3 && (
-                      <button onClick={() => update({ sort: 'status' })} className="px-2 pt-1 text-[12px] text-white/75 underline-offset-2 hover:underline">
-                        and {attention.length - 2} more
-                      </button>
-                    )}
                   </Widget>
                 )}
               </AnimatePresence>
@@ -928,6 +987,30 @@ export default function App() {
             onRemove={appId => removeFromFolder(openFolder.id, appId)}
           />
         )}
+        {containersOpen && (
+          <ContainersView key="containers" data={containersData} items={items} overrides={overrides} onClose={() => setContainersOpen(false)} />
+        )}
+        {linkEdit && (
+          <LinkEditor
+            key="link-editor"
+            link={linkEdit.id ? linkEdit : null}
+            notify={notify}
+            onClose={() => setLinkEdit(null)}
+            onSave={l => {
+              update(s => ({ links: s.links.some(x => x.id === l.id) ? s.links.map(x => (x.id === l.id ? l : x)) : [...s.links, l] }));
+              setLinkEdit(null);
+              notify(linkEdit.id ? 'Link updated' : `${l.name} added`);
+            }}
+            onDelete={l => {
+              update(s => ({
+                links: s.links.filter(x => x.id !== l.id),
+                folders: Object.fromEntries(Object.entries(s.folders).map(([k, f]) => [k, { ...f, ids: f.ids.filter(x => x !== l.id) }]))
+              }));
+              setLinkEdit(null);
+              notify(`${l.name} removed`);
+            }}
+          />
+        )}
         {about && mOk && <AboutServer key="about" m={m} coolifyUrl={data?.coolifyUrl} onClose={() => setAbout(false)} />}
         {peek && (
           <Peek
@@ -945,10 +1028,12 @@ export default function App() {
             onRemoveFromFolder={item => removeFromFolder(folderOf[item.id], item.id)}
             onAction={runAction}
             onKey={saveKey}
+            onEditLink={item => setLinkEdit(settings.links.find(l => l.id === item.id) || {})}
+            extra={peek.item.kind !== 'link' && <AppContainers item={peek.item} data={containersData} />}
           />
         )}
         {spotlight && (
-          <Spotlight key="spot" items={items.filter(i => !settings.hidden.includes(i.id))} overrides={overrides} onClose={() => setSpotlight(false)} />
+          <Spotlight key="spot" items={allItems.filter(i => !settings.hidden.includes(i.id))} overrides={overrides} onClose={() => setSpotlight(false)} />
         )}
         {panel && (
           <Settings
@@ -961,6 +1046,8 @@ export default function App() {
             onClose={() => setPanel(false)}
             notify={notify}
             onGroup={groupByProject}
+            onAddLink={() => setLinkEdit({})}
+            onEditLink={l => setLinkEdit(l)}
           />
         )}
         {customising && (

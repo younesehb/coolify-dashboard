@@ -75,7 +75,7 @@ export function Tile({ item, index = 0, settings, jiggle, pulse, job, mergeTarge
         />
         {job && <Ring job={job} size={settings.iconSize} />}
         {/* Every icon carries its status: green running, amber unhealthy, red stopped. */}
-        {!job && (
+        {!job && s.key !== 'link' && (
           <span
             className={`absolute -right-1 -top-1 size-3.5 rounded-full ${s.dot} shadow-[0_1px_3px_rgb(0_0_0/0.4)] ring-2 ring-white/80 ${pulse ? 'ping-once' : ''}`}
             role="img"

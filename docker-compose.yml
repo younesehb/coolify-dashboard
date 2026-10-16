@@ -13,5 +13,18 @@ services:
       OWNER_NAME: ${OWNER_NAME:-}
       # Host network traffic for the Network widget (CPU, memory and disk work without it).
       HOST_PROC: /host/proc
+      # Containers browser through the read-only proxy below.
+      DOCKER_HOST: http://docker-proxy:2375
     volumes:
       - /proc:/host/proc:ro
+    depends_on:
+      - docker-proxy
+
+  # Only lets "list containers" and "container stats" through to the Docker socket.
+  docker-proxy:
+    image: ghcr.io/tecnativa/docker-socket-proxy:latest
+    restart: unless-stopped
+    environment:
+      CONTAINERS: 1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro

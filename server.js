@@ -5,6 +5,8 @@ import path from 'node:path';
 import { createHash, timingSafeEqual } from 'node:crypto';
 import { demoItems } from './demo.js';
 import { metrics, startMetrics } from './metrics.js';
+import { containers, dockerEnabled, pool } from './docker.js';
+import { demoContainers, demoCoolify } from './demo.js';
 
 const COOLIFY_URL = (process.env.COOLIFY_URL || '').replace(/\/$/, '');
 const COOLIFY_PUBLIC_URL = (process.env.COOLIFY_PUBLIC_URL || COOLIFY_URL).replace(/\/$/, '');
@@ -39,6 +41,11 @@ const ROUTES = {
     restart: id => `/applications/${id}/restart`,
     stop: id => `/applications/${id}/stop`,
     start: id => `/applications/${id}/start`
+  },
+  database: {
+    restart: id => `/databases/${id}/restart`,
+    stop: id => `/databases/${id}/stop`,
+    start: id => `/databases/${id}/start`
   },
   service: {
     redeploy: id => `/services/${id}/restart?latest=true`,
@@ -117,6 +124,18 @@ const serviceLogos = async () => {
   return templates;
 };
 
+// Simple Icons slugs for Coolify's standalone database types.
+const DB_LOGOS = {
+  postgresql: 'postgresql',
+  mysql: 'mysql',
+  mariadb: 'mariadb',
+  mongodb: 'mongodb',
+  redis: 'redis',
+  clickhouse: 'clickhouse',
+  keydb: 'redis',
+  dragonfly: 'redis'
+};
+
 let cache = { at: 0, data: null };
 // Single 30 s in-memory cache; plenty for one instance.
 async function loadApps() {
@@ -129,13 +148,20 @@ async function loadApps() {
         coolifyUrl: 'https://coolify.io',
         owner: process.env.OWNER_NAME || '',
         actions: true,
+        containers: true,
         demo: true,
         items: demoItems()
       }
     };
     return cache.data;
   }
-  const [apps, services, projects, logos] = await Promise.all([api('/applications'), api('/services'), api('/projects'), serviceLogos()]);
+  const [apps, services, projects, logos, databases] = await Promise.all([
+    api('/applications'),
+    api('/services'),
+    api('/projects'),
+    serviceLogos(),
+    api('/databases').catch(() => [])
+  ]);
   const details = await Promise.all(projects.map(p => api(`/projects/${p.uuid}`).catch(() => ({ ...p, environments: [] }))));
   const envs = {};
   for (const p of details) for (const e of p.environments || []) envs[e.id] = { project: p.name, projectUuid: p.uuid, environment: e.name, envUuid: e.uuid };
@@ -181,6 +207,25 @@ async function loadApps() {
         logo: logo ? `https://cdn.jsdelivr.net/gh/coollabsio/coolify@v4.x/public/${logo}` : null,
         manage: e.projectUuid ? `${COOLIFY_PUBLIC_URL}/project/${e.projectUuid}/environment/${e.envUuid}/service/${s.uuid}` : null
       };
+    }),
+    // Only display fields leave the server: never connection URLs, passwords or ports.
+    ...(Array.isArray(databases) ? databases : []).map(d => {
+      const e = envs[d.environment_id] || {};
+      const type = String(d.database_type || d.type || 'database').replace(/^standalone-/, '');
+      return {
+        id: d.uuid,
+        kind: 'database',
+        name: d.name,
+        description: d.description || '',
+        urls: [],
+        ...parse(d.status),
+        ...e,
+        stack: type,
+        repo: null,
+        updatedAt: d.updated_at,
+        logo: DB_LOGOS[type] ? `https://cdn.simpleicons.org/${DB_LOGOS[type]}` : null,
+        manage: e.projectUuid ? `${COOLIFY_PUBLIC_URL}/project/${e.projectUuid}/environment/${e.envUuid}/database/${d.uuid}` : null
+      };
     })
   ].map(({ projectUuid, envUuid, ...rest }) => rest);
 
@@ -190,7 +235,14 @@ async function loadApps() {
   } catch {}
   cache = {
     at: Date.now(),
-    data: { instance, coolifyUrl: COOLIFY_PUBLIC_URL, owner: process.env.OWNER_NAME || '', actions: Boolean(ACTIONS_PASSWORD), items }
+    data: {
+      instance,
+      coolifyUrl: COOLIFY_PUBLIC_URL,
+      owner: process.env.OWNER_NAME || '',
+      actions: Boolean(ACTIONS_PASSWORD),
+      containers: dockerEnabled,
+      items
+    }
   };
   return cache.data;
 }
@@ -278,6 +330,50 @@ async function serverFacts() {
   return facts.data;
 }
 
+// Instance-wide numbers for the Coolify and Deployments widgets. Deployment logs are never forwarded.
+let statsCache = { at: 0, data: null };
+const pickDeploy = (d, name) => ({
+  id: d.deployment_uuid,
+  app: name || d.application_name || 'App',
+  status: d.status,
+  at: d.created_at,
+  updated: d.updated_at,
+  commit: (d.commit_message || '').split('\n')[0].slice(0, 90) || null,
+  webhook: Boolean(d.is_webhook)
+});
+async function coolifyStats() {
+  if (DEMO) return demoCoolify();
+  if (statsCache.data && Date.now() - statsCache.at < 60_000) return statsCache.data;
+  const { items } = await loadApps();
+  const apps = items.filter(i => i.kind === 'app');
+  const [running, servers, projects, facts] = await Promise.all([
+    api('/deployments').catch(() => []),
+    api('/servers').catch(() => []),
+    api('/projects').catch(() => []),
+    serverFacts()
+  ]);
+  const per = await pool(apps, 6, a =>
+    api(`/deployments/applications/${a.id}?take=3`).then(r => (Array.isArray(r) ? r : r.deployments || []).map(d => pickDeploy(d, a.name)))
+  );
+  const count = k => items.filter(i => i.kind === k).length;
+  statsCache = {
+    at: Date.now(),
+    data: {
+      version: facts.coolifyVersion || null,
+      projects: projects.length,
+      servers: servers.map(s => ({ name: s.name, reachable: s.settings?.is_reachable !== false })),
+      counts: { apps: count('app'), services: count('service'), databases: count('database') },
+      running: (Array.isArray(running) ? running : []).map(d => pickDeploy(d)),
+      recent: per
+        .flat()
+        .filter(Boolean)
+        .sort((a, b) => Date.parse(b.at) - Date.parse(a.at))
+        .slice(0, 8)
+    }
+  };
+  return statsCache.data;
+}
+
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://x');
   try {
@@ -307,6 +403,12 @@ const server = http.createServer(async (req, res) => {
       if (DEMO) return send(res, 200, { status: Date.now() - Number(dep[1].slice(4)) > 6000 ? 'finished' : 'in_progress' });
       const d = await api(`/deployments/${dep[1]}`);
       return send(res, 200, { status: d.status });
+    }
+    if (url.pathname === '/api/coolify') return send(res, 200, await coolifyStats(), 'application/json', { 'Cache-Control': 'no-store' });
+    if (url.pathname === '/api/containers') {
+      if (DEMO) return send(res, 200, { available: true, containers: demoContainers() }, 'application/json', { 'Cache-Control': 'no-store' });
+      if (!dockerEnabled) return send(res, 200, { available: false });
+      return send(res, 200, { available: true, containers: await containers() }, 'application/json', { 'Cache-Control': 'no-store' });
     }
     if (url.pathname === '/api/metrics') return send(res, 200, metrics(await serverFacts()), 'application/json', { 'Cache-Control': 'no-store' });
     if (url.pathname === '/api/apps') {

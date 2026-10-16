@@ -4,6 +4,7 @@ import { animate } from 'motion/react';
 const GENERIC = new Set(['main', 'tst', 'app', 'web', 'prod', 'production']);
 
 export const status = i => {
+  if (i.kind === 'link') return { key: 'link', label: 'Link', dot: '', rank: 0 };
   if (i.state === 'running' && i.health !== 'unhealthy') return { key: 'up', label: 'Running', dot: 'bg-up', rank: 0 };
   if (i.state === 'running' || i.state === 'degraded')
     return { key: 'warn', label: i.state === 'degraded' ? 'Degraded' : 'Unhealthy', dot: 'bg-warn', rank: 1 };
@@ -26,7 +27,7 @@ export const matches = (i, q, overrides) => {
 
 export function AppIcon({ item, overrides, size = 76, className = '' }) {
   const custom = overrides?.[item.id]?.icon;
-  const sources = [custom, item.logo, item.urls.length ? `/api/icon?id=${item.id}` : null].filter(Boolean);
+  const sources = [custom, item.logo, ...(item.icons || []), item.urls.length && item.kind !== 'link' ? `/api/icon?id=${item.id}` : null].filter(Boolean);
   const key = sources.join('|');
   const [i, setI] = useState(0);
   useEffect(() => setI(0), [key]);

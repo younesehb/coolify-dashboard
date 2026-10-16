@@ -39,7 +39,7 @@ function Slider({ label, value, min, max, step = 1, format = v => v, onChange })
 const field =
   'w-full rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-[14px] text-white outline-none placeholder:text-white/40 focus:border-white/50';
 
-export default function Settings({ settings, update, reset, replace, items, onClose, notify, onGroup }) {
+export default function Settings({ settings, update, reset, replace, items, onClose, notify, onGroup, onAddLink, onEditLink }) {
   const fileRef = useRef(null);
   const importRef = useRef(null);
   const hidden = items.filter(i => settings.hidden.includes(i.id));
@@ -156,6 +156,9 @@ export default function Settings({ settings, update, reset, replace, items, onCl
             <Toggle label="Search bar" checked={settings.showSearch} onChange={showSearch => update({ showSearch })} />
             {[
               ['server', 'Server widget (name and specs)'],
+              ['coolify', 'Coolify widget (projects, servers, databases)'],
+              ['deployments', 'Deployments widget'],
+              ['containers', 'Containers widget (needs Docker access)'],
               ['system', 'System widget (CPU, memory, disk)'],
               ['memory', 'Memory widget'],
               ['storage', 'Storage widget'],
@@ -198,6 +201,24 @@ export default function Settings({ settings, update, reset, replace, items, onCl
               format={v => `${v}s`}
               onChange={refreshSeconds => update({ refreshSeconds })}
             />
+          </Section>
+
+          <Section title="Links">
+            <p className="text-[13px] text-white/60">Add any website or tool as an icon on your home screen.</p>
+            {settings.links.map(l => (
+              <div key={l.id} className="flex items-center gap-3">
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[14px]">{l.name}</span>
+                  <span className="block truncate text-[12px] text-white/50">{l.url}</span>
+                </span>
+                <button onClick={() => onEditLink(l)} className="rounded-full bg-white/10 px-2.5 py-1 text-[12px] hover:bg-white/20">
+                  Edit
+                </button>
+              </div>
+            ))}
+            <button onClick={onAddLink} className="rounded-full bg-white/10 px-3 py-1.5 text-[13px] hover:bg-white/20">
+              Add a link
+            </button>
           </Section>
 
           <Section title="Folders">

@@ -2,6 +2,19 @@
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
+## [1.4.0] - 2026-10-16
+
+### Added
+
+- Custom links: add any website or tool as an icon on the home screen, with its site icon or your own; links can be dragged into folders, searched, edited and removed.
+- Coolify databases on the home screen with their logos and status, plus Start, Restart and Stop actions.
+- Coolify widget (projects, servers, apps, databases, running count, version) and Deployments widget (running and recent deployments with commit and result).
+- Containers browser: every Docker container with live CPU, memory, network and disk I/O, sortable, searchable and groupable by project; each app's peek card shows its own containers. Uses `DOCKER_HOST`, ideally a read-only socket proxy.
+
+### Fixed
+
+- Tall peek cards no longer cover the lifted icon; they centre and scroll when there is no room.
+
 ## [1.3.0] - 2026-10-15
 
 ### Added
@@ -40,6 +53,7 @@ All notable changes to this project are documented here. The format follows [Kee
 - Customise panel: wallpapers and uploads, glass blur and frost, icon size, widgets, dock, hidden and renamed apps, custom icons, export/import.
 - Demo mode (`DEMO=true`), Docker image on GHCR, Docker Compose file.
 
+[1.4.0]: https://github.com/younesehb/coolify-dashboard/releases/tag/v1.4.0
 [1.3.0]: https://github.com/younesehb/coolify-dashboard/releases/tag/v1.3.0
 [1.2.0]: https://github.com/younesehb/coolify-dashboard/releases/tag/v1.2.0
 [1.1.0]: https://github.com/younesehb/coolify-dashboard/releases/tag/v1.1.0

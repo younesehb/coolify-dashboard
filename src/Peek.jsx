@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import {
   Copy,
@@ -66,7 +66,9 @@ export default function Peek({
   onHide,
   onRemoveFromFolder,
   onAction,
-  onKey
+  onKey,
+  onEditLink,
+  extra
 }) {
   const { item, rect } = peek;
   const s = status(item);
@@ -85,11 +87,31 @@ export default function Peek({
   const size = Math.round(rect.width);
   const iconBox = { left: rect.left, top: rect.top };
   const width = Math.min(320, window.innerWidth - 24);
-  const below = rect.top + size + 380 < window.innerHeight;
   const left = Math.max(12, Math.min(rect.left + rect.width / 2 - width / 2, window.innerWidth - width - 12));
-  const top = below ? iconBox.top + size + 14 : Math.max(12, iconBox.top - 14 - 400);
+  // Measure the card, then sit it below the icon, above it, or (if it fits neither) centred with the icon hidden.
+  const cardRef = useRef(null);
+  const [place, setPlace] = useState({ top: iconBox.top + size + 14, below: true, icon: true, ready: false });
+  useLayoutEffect(() => {
+    const h = cardRef.current?.offsetHeight || 0;
+    const vh = window.innerHeight;
+    const belowTop = iconBox.top + size * 1.08 + 14;
+    const aboveTop = iconBox.top - 14 - h;
+    if (belowTop + h <= vh - 12) setPlace({ top: belowTop, below: true, icon: true, ready: true });
+    else if (aboveTop >= 12) setPlace({ top: aboveTop, below: false, icon: true, ready: true });
+    else setPlace({ top: Math.max(12, (vh - h) / 2), below: true, icon: false, ready: true });
+  }, [item.id, extra ? 1 : 0, askKey]);
+  const { top, below } = place;
 
-  const available = s.key === 'down' ? ['start', 'redeploy'] : ['redeploy', 'restart', 'stop'];
+  const isLink = item.kind === 'link';
+  // Databases have no build step, so no Redeploy.
+  const available =
+    item.kind === 'database'
+      ? s.key === 'down'
+        ? ['start']
+        : ['restart', 'stop']
+      : s.key === 'down'
+        ? ['start', 'redeploy']
+        : ['redeploy', 'restart', 'stop'];
   const run = async action => {
     if (!hasKey) return setAskKey(action);
     if (confirming !== action) return setConfirming(action);
@@ -119,23 +141,32 @@ export default function Peek({
       className="fixed inset-0 z-50 bg-black/25 backdrop-blur-[6px]"
       onPointerDown={e => e.target === e.currentTarget && onClose()}
     >
+      {place.icon && (
+        <motion.div
+          initial={{ scale: 1 }}
+          animate={{ scale: 1.08 }}
+          transition={{ type: 'spring', stiffness: 420, damping: 26 }}
+          className="pointer-events-none absolute"
+          style={iconBox}
+        >
+          <AppIcon item={item} overrides={overrides} size={size} />
+        </motion.div>
+      )}
       <motion.div
-        initial={{ scale: 1 }}
-        animate={{ scale: 1.08 }}
-        transition={{ type: 'spring', stiffness: 420, damping: 26 }}
-        className="pointer-events-none absolute"
-        style={iconBox}
-      >
-        <AppIcon item={item} overrides={overrides} size={size} />
-      </motion.div>
-      <motion.div
+        ref={cardRef}
         role="menu"
         initial={{ opacity: 0, scale: 0.85, y: below ? -12 : 12 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.9 }}
         transition={{ type: 'spring', stiffness: 460, damping: 32 }}
-        className="glass glass-dark absolute overflow-hidden rounded-[26px] p-2"
-        style={{ left, top, width, transformOrigin: `${rect.left + rect.width / 2 - left}px ${below ? 0 : '100%'}` }}
+        className="glass glass-dark absolute max-h-[calc(100vh-24px)] overflow-y-auto overscroll-contain rounded-[26px] p-2"
+        style={{
+          left,
+          top,
+          width,
+          visibility: place.ready ? 'visible' : 'hidden',
+          transformOrigin: `${rect.left + rect.width / 2 - left}px ${below ? 0 : '100%'}`
+        }}
       >
         <div className="px-3 pb-3 pt-2">
           <p className="truncate text-[17px] font-semibold">{nameOf(item, overrides)}</p>
@@ -171,7 +202,9 @@ export default function Peek({
           </div>
         )}
 
-        {actionsEnabled && (
+        {extra}
+
+        {actionsEnabled && !isLink && (
           <div className="border-t border-white/10 py-1">
             {askKey ? (
               <form
@@ -223,17 +256,19 @@ export default function Peek({
         )}
 
         <div className="border-t border-white/10 pt-1">
-          <button role="menuitem" className={row} onClick={() => (onClose(), onCustomise(item))}>
-            <Pencil className="size-4 text-white/70" /> Rename or change icon
+          <button role="menuitem" className={row} onClick={() => (onClose(), isLink ? onEditLink(item) : onCustomise(item))}>
+            <Pencil className="size-4 text-white/70" /> {isLink ? 'Edit or remove link' : 'Rename or change icon'}
           </button>
           {inFolder && (
             <button role="menuitem" className={row} onClick={() => (onClose(), onRemoveFromFolder(item))}>
               <FolderMinus className="size-4 text-white/70" /> Remove from folder
             </button>
           )}
-          <button role="menuitem" className={row} onClick={() => (onClose(), onHide(item))}>
-            <EyeOff className="size-4 text-white/70" /> Hide from home screen
-          </button>
+          {!isLink && (
+            <button role="menuitem" className={row} onClick={() => (onClose(), onHide(item))}>
+              <EyeOff className="size-4 text-white/70" /> Hide from home screen
+            </button>
+          )}
         </div>
       </motion.div>
     </motion.div>
